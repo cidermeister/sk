@@ -52,12 +52,13 @@ async function main() {
         name: t.name,
         birthDate: t.birthDate,
         passingDate: t.passingDate,
+        userId: admin.id,
       },
     }).catch(async (e) => {
       // If no unique constraint to upsert on, just create if not exists
       const exists = await prisma.tribute.findFirst({ where: { name: t.name } })
       if (!exists) {
-        return await prisma.tribute.create({ data: t })
+        return await prisma.tribute.create({ data: { ...t, userId: admin.id } })
       }
       return exists
     })
