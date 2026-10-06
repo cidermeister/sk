@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-aurora: #00ffcc;
+  --color-aurora-purple: #9d4edd;
+  --color-space-900: #050510;
+  --color-space-800: #0a0a20;
+  --color-space-700: #101030;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #050510;
+  --foreground: #ededed;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle animated gradient background to simulate aurora slightly */
+.bg-aurora-glow {
+  background: radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.1) 0%, rgba(5, 5, 16, 0) 50%);
+}
