@@ -39,10 +39,18 @@ export function GalaxyScene({ tributes, onStarClick, targetPosition }: GalaxySce
   return (
     <div className="w-full h-[calc(100vh-4rem)] absolute top-16 left-0 -z-10">
       <Canvas camera={{ position: [0, 50, 100], fov: 60 }}>
-        <ambientLight intensity={0.1} />
+        <color attach="background" args={["#050510"]} />
+        <ambientLight intensity={0.5} />
+        <pointLight position={[50, 50, 50]} intensity={2} color="#ffffff" distance={200} />
         <pointLight position={[0, 0, 0]} intensity={2} color="#00ffcc" distance={200} />
 
         <BackgroundStars radius={300} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+
+        {/* The Earth in the center of the universe */}
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[15, 32, 32]} />
+          <meshStandardMaterial color="#2b65ec" roughness={0.6} metalness={0.1} emissive="#0a2a66" emissiveIntensity={0.5} />
+        </mesh>
 
         <group>
           {stars.map(({ tribute, position }) => (
