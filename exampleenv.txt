@@ -1,0 +1,14 @@
+# Database (SQLite for local, Neon Postgres for prod)
+DATABASE_URL="file:./dev.db"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+# Generate a secret with: openssl rand -base64 32
+NEXTAUTH_SECRET="your-super-secret-nextauth-string"
+
+# Email Provider (SMTP)
+EMAIL_SERVER_HOST="smtp.example.com"
+EMAIL_SERVER_PORT="587"
+EMAIL_SERVER_USER="user@example.com"
+EMAIL_SERVER_PASSWORD="password"
+EMAIL_FROM="noreply@example.com"
