@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, useCursor } from "@react-three/drei";
 import * as THREE from "three";
 
 export interface TributeData {
@@ -23,6 +23,7 @@ interface StarProps {
 export function Star({ position, tribute, onClick }: StarProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
+  useCursor(hovered);
 
   useFrame((state) => {
     if (meshRef.current) {
@@ -40,8 +41,16 @@ export function Star({ position, tribute, onClick }: StarProps) {
           e.stopPropagation();
           onClick(tribute, position);
         }}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHovered(true);
+
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          setHovered(false);
+
+        }}
       >
         <sphereGeometry args={[hovered ? 0.8 : 0.5, 16, 16]} />
         <meshBasicMaterial
