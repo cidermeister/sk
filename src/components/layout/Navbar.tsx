@@ -29,7 +29,7 @@ export function Navbar() {
           </>
         ) : (
           <button
-            onClick={() => signIn()}
+            onClick={() => signIn(process.env.NEXT_PUBLIC_AUTO_LOGIN === "true" ? "credentials" : undefined)}
             className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
           >
             <LogIn className="w-4 h-4" />

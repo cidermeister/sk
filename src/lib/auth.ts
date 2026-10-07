@@ -24,7 +24,11 @@ export const authOptions: NextAuthOptions = {
               name: "Dev User",
             },
           });
-          return user;
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          };
         }
       })
     ] : []),
@@ -47,9 +51,18 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (session?.user && token.sub) {
         session.user.id = token.sub
+      }
+      if (session?.user && token.id) {
+        session.user.id = token.id as string;
       }
       return session
     },

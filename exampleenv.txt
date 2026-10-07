@@ -15,3 +15,4 @@ EMAIL_FROM="noreply@example.com"
 
 # Set to true to bypass email login and automatically log in as a dev user
 AUTO_LOGIN="true"
+NEXT_PUBLIC_AUTO_LOGIN="true"
