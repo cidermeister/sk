@@ -15,11 +15,16 @@ export const authOptions: NextAuthOptions = {
         credentials: {},
         async authorize() {
           // Always return a mock user when auto-login is enabled
-          return {
-            id: "auto-login-user-id",
-            name: "Dev User",
-            email: "dev@example.com",
-          }
+          // Upsert the user in the database so foreign keys (like creating a Tribute) won't fail
+          const user = await prisma.user.upsert({
+            where: { email: "dev@example.com" },
+            update: {},
+            create: {
+              email: "dev@example.com",
+              name: "Dev User",
+            },
+          });
+          return user;
         }
       })
     ] : []),
