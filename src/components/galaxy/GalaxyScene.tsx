@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Stars as BackgroundStars } from "@react-three/drei";
+import { OrbitControls, Stars as BackgroundStars, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { Star, TributeData } from "./Star";
 import { calculateStarPosition } from "./utils";
@@ -13,15 +13,75 @@ interface GalaxySceneProps {
   targetPosition: [number, number, number] | null;
 }
 
+
+function Earth() {
+  const colorMap = useTexture("/earth-texture.jpg");
+  return (
+    <mesh position={[0, 0, 0]}>
+      <sphereGeometry args={[15, 64, 64]} />
+      <meshStandardMaterial map={colorMap} roughness={0.6} metalness={0.1} />
+    </mesh>
+  );
+}
+
 function CameraController({ targetPosition }: { targetPosition: [number, number, number] | null }) {
-  const { camera } = useThree();
+  const { camera, controls } = useThree();
 
   useFrame(() => {
-    if (targetPosition) {
-      // Calculate target camera position (slightly offset from the star)
-      const target = new THREE.Vector3(targetPosition[0], targetPosition[1], targetPosition[2] + 15);
-      camera.position.lerp(target, 0.05);
-      camera.lookAt(targetPosition[0], targetPosition[1], targetPosition[2]);
+    if (controls) {
+      // @ts-ignore - OrbitControls is attached to controls
+      const orbitControls = controls as any;
+
+      // Safe guard object properties to prevent crashes on initial render
+      if (typeof orbitControls.userData !== "object" || orbitControls.userData === null) {
+        orbitControls.userData = {
+          isResetting: false,
+          lastTargetPosition: false
+        };
+      }
+
+      if (targetPosition) {
+        const targetVec = new THREE.Vector3(...targetPosition);
+
+        // Lerp the OrbitControls target to look at the star
+        orbitControls.target.lerp(targetVec, 0.02);
+
+        // Calculate desired camera position slightly offset from the star
+        const cameraTarget = new THREE.Vector3(targetPosition[0], targetPosition[1], targetPosition[2] + 15);
+
+        // Lerp camera position
+        camera.position.lerp(cameraTarget, 0.02);
+
+        // Flag that we are targeting a star so we know when to reset
+        orbitControls.userData.lastTargetPosition = true;
+      } else {
+        // Reset to default Earth view when dialog is closed
+        const originVec = new THREE.Vector3(0, 0, 0);
+        const defaultCameraPos = new THREE.Vector3(0, 50, 100);
+
+        // We need to distinguish between manual panning and resetting from a dialog.
+        if (orbitControls.userData.isResetting === undefined) {
+           orbitControls.userData.isResetting = false;
+        }
+
+        // If we were just targeting a star, and now targetPosition is null, start the reset.
+        if (orbitControls.userData.lastTargetPosition) {
+            orbitControls.userData.isResetting = true;
+            orbitControls.userData.lastTargetPosition = false;
+        }
+
+        if (orbitControls.userData.isResetting) {
+           orbitControls.target.lerp(originVec, 0.04);
+           camera.position.lerp(defaultCameraPos, 0.04);
+
+           if (orbitControls.target.distanceTo(originVec) < 1.0) {
+              orbitControls.userData.isResetting = false;
+           }
+        }
+      }
+
+      // Must update controls
+      orbitControls.update();
     }
   });
 
@@ -37,12 +97,18 @@ export function GalaxyScene({ tributes, onStarClick, targetPosition }: GalaxySce
   }, [tributes]);
 
   return (
-    <div className="w-full h-[calc(100vh-4rem)] absolute top-16 left-0 -z-10">
+    <div className="w-full h-[calc(100vh-4rem)] absolute top-0 left-0 -z-10">
       <Canvas camera={{ position: [0, 50, 100], fov: 60 }}>
-        <ambientLight intensity={0.1} />
-        <pointLight position={[0, 0, 0]} intensity={2} color="#00ffcc" distance={200} />
+        <color attach="background" args={["#050510"]} />
+        <ambientLight intensity={5} />
+        <ambientLight intensity={2} />
+        <directionalLight position={[100, 50, 100]} intensity={15} />
+        <pointLight position={[-50, -50, -50]} intensity={100} color="#00ffcc" distance={500} />
 
         <BackgroundStars radius={300} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+
+        {/* The Earth in the center of the universe */}
+        <Earth />
 
         <group>
           {stars.map(({ tribute, position }) => (
@@ -56,7 +122,8 @@ export function GalaxyScene({ tributes, onStarClick, targetPosition }: GalaxySce
         </group>
 
         <CameraController targetPosition={targetPosition} />
-        {!targetPosition && <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} autoRotate autoRotateSpeed={0.5} maxDistance={250} minDistance={10} />}
+        {/* @ts-ignore - listenToKeyEvents needs to be attached to window */}
+        <OrbitControls listenToKeyEvents={typeof window !== "undefined" ? window : undefined} makeDefault enablePan={true} enableZoom={true} enableRotate={true} autoRotate={!targetPosition} autoRotateSpeed={0.15} maxDistance={250} minDistance={10} />
       </Canvas>
     </div>
   );
