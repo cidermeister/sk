@@ -25,14 +25,26 @@ function Earth() {
 }
 
 function CameraController({ targetPosition }: { targetPosition: [number, number, number] | null }) {
-  const { camera } = useThree();
+  const { camera, controls } = useThree();
 
   useFrame(() => {
-    if (targetPosition) {
-      // Calculate target camera position (slightly offset from the star)
-      const target = new THREE.Vector3(targetPosition[0], targetPosition[1], targetPosition[2] + 15);
-      camera.position.lerp(target, 0.02);
-      camera.lookAt(targetPosition[0], targetPosition[1], targetPosition[2]);
+    if (targetPosition && controls) {
+      // @ts-ignore - OrbitControls is attached to controls
+      const orbitControls = controls as any;
+
+      const targetVec = new THREE.Vector3(...targetPosition);
+
+      // Lerp the OrbitControls target to look at the star
+      orbitControls.target.lerp(targetVec, 0.02);
+
+      // Calculate desired camera position slightly offset from the star
+      const cameraTarget = new THREE.Vector3(targetPosition[0], targetPosition[1], targetPosition[2] + 15);
+
+      // Lerp camera position
+      camera.position.lerp(cameraTarget, 0.02);
+
+      // Must update controls
+      orbitControls.update();
     }
   });
 
@@ -73,7 +85,7 @@ export function GalaxyScene({ tributes, onStarClick, targetPosition }: GalaxySce
         </group>
 
         <CameraController targetPosition={targetPosition} />
-        {!targetPosition && <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} autoRotate autoRotateSpeed={0.15} maxDistance={250} minDistance={10} />}
+        <OrbitControls makeDefault enablePan={true} enableZoom={true} enableRotate={true} autoRotate={!targetPosition} autoRotateSpeed={0.15} maxDistance={250} minDistance={10} />
       </Canvas>
     </div>
   );
