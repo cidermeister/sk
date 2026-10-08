@@ -17,6 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Handle old stale cookies from previous deployments
+    let resolvedUserId = session.user.id;
+    if (resolvedUserId === "auto-login-user-id") {
+      const devUser = await prisma.user.findUnique({ where: { email: "dev@example.com" } });
+      if (devUser) {
+        resolvedUserId = devUser.id;
+      }
+    }
+
     const tribute = await prisma.tribute.create({
       data: {
         name,
@@ -24,14 +33,14 @@ export async function POST(request: Request) {
         passingDate: new Date(passingDate),
         audioUrl,
         photoUrl,
-        userId: session.user.id,
+        userId: resolvedUserId,
       },
     });
 
     return NextResponse.json(tribute);
   } catch (error) {
     console.error("Tribute creation error:", error);
-    return NextResponse.json({ error: "Failed to create tribute" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create tribute", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 
