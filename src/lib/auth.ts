@@ -8,14 +8,11 @@ import { Adapter } from "next-auth/adapters"
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
-
     ...(process.env.AUTO_LOGIN === 'true' ? [
       CredentialsProvider({
         name: "Automatic Login",
         credentials: {},
         async authorize() {
-          // Always return a mock user when auto-login is enabled
-          // Upsert the user in the database so foreign keys (like creating a Tribute) won't fail
           const user = await prisma.user.upsert({
             where: { email: "dev@example.com" },
             update: {},
@@ -32,7 +29,6 @@ export const authOptions: NextAuthOptions = {
         }
       })
     ] : []),
-
     EmailProvider({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
@@ -44,10 +40,11 @@ export const authOptions: NextAuthOptions = {
       },
       from: process.env.EMAIL_FROM
     }),
-
   ],
+  // When using an adapter, NextAuth defaults to database sessions.
+  // We ONLY need jwt strategy if using credentials provider (AUTO_LOGIN).
   session: {
-    strategy: "jwt",
+    strategy: process.env.AUTO_LOGIN === 'true' ? "jwt" : "database",
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
@@ -57,14 +54,18 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
-      if (session?.user && token.sub) {
-        session.user.id = token.sub
+    async session({ session, token, user }) {
+      // If we are using database strategy, 'user' is populated instead of 'token'
+      if (session?.user) {
+        if (user?.id) {
+          session.user.id = user.id;
+        } else if (token?.id) {
+          session.user.id = token.id as string;
+        } else if (token?.sub) {
+          session.user.id = token.sub;
+        }
       }
-      if (session?.user && token.id) {
-        session.user.id = token.id as string;
-      }
-      return session
+      return session;
     },
   },
 }
