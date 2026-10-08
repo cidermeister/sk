@@ -21,7 +21,7 @@ interface StarProps {
 }
 
 export function Star({ position, tribute, onClick }: StarProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
 
@@ -35,7 +35,7 @@ export function Star({ position, tribute, onClick }: StarProps) {
 
   return (
     <group position={position}>
-      <mesh
+      <group
         ref={meshRef}
         onClick={(e) => {
           e.stopPropagation();
@@ -44,21 +44,29 @@ export function Star({ position, tribute, onClick }: StarProps) {
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
-
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
           setHovered(false);
-
         }}
       >
-        <sphereGeometry args={[hovered ? 0.8 : 0.5, 16, 16]} />
-        <meshBasicMaterial
-          color={hovered ? "#00ffcc" : "#ffffff"}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
+        {/* Core of the star */}
+        <mesh>
+          <sphereGeometry args={[hovered ? 0.6 : 0.4, 32, 32]} />
+          <meshBasicMaterial color={hovered ? "#00ffcc" : "#ffffff"} />
+        </mesh>
+        {/* Glow / Halo effect using AdditiveBlending */}
+        <mesh>
+          <sphereGeometry args={[hovered ? 1.2 : 0.8, 32, 32]} />
+          <meshBasicMaterial
+            color={hovered ? "#00ffcc" : "#44aaff"}
+            transparent
+            opacity={0.3}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
       {hovered && (
         <Html distanceFactor={15} center>
           <div className="bg-space-900/80 backdrop-blur-sm border border-aurora/50 text-white px-3 py-1 rounded-full text-sm whitespace-nowrap pointer-events-none">

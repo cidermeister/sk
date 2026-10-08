@@ -28,20 +28,49 @@ function CameraController({ targetPosition }: { targetPosition: [number, number,
   const { camera, controls } = useThree();
 
   useFrame(() => {
-    if (targetPosition && controls) {
+    if (controls) {
       // @ts-ignore - OrbitControls is attached to controls
       const orbitControls = controls as any;
 
-      const targetVec = new THREE.Vector3(...targetPosition);
+      if (targetPosition) {
+        const targetVec = new THREE.Vector3(...targetPosition);
 
-      // Lerp the OrbitControls target to look at the star
-      orbitControls.target.lerp(targetVec, 0.02);
+        // Lerp the OrbitControls target to look at the star
+        orbitControls.target.lerp(targetVec, 0.02);
 
-      // Calculate desired camera position slightly offset from the star
-      const cameraTarget = new THREE.Vector3(targetPosition[0], targetPosition[1], targetPosition[2] + 15);
+        // Calculate desired camera position slightly offset from the star
+        const cameraTarget = new THREE.Vector3(targetPosition[0], targetPosition[1], targetPosition[2] + 15);
 
-      // Lerp camera position
-      camera.position.lerp(cameraTarget, 0.02);
+        // Lerp camera position
+        camera.position.lerp(cameraTarget, 0.02);
+
+        // Flag that we are targeting a star so we know when to reset
+        orbitControls.userData.lastTargetPosition = true;
+      } else {
+        // Reset to default Earth view when dialog is closed
+        const originVec = new THREE.Vector3(0, 0, 0);
+        const defaultCameraPos = new THREE.Vector3(0, 50, 100);
+
+        // We need to distinguish between manual panning and resetting from a dialog.
+        if (orbitControls.userData.isResetting === undefined) {
+           orbitControls.userData.isResetting = false;
+        }
+
+        // If we were just targeting a star, and now targetPosition is null, start the reset.
+        if (orbitControls.userData.lastTargetPosition) {
+            orbitControls.userData.isResetting = true;
+            orbitControls.userData.lastTargetPosition = false;
+        }
+
+        if (orbitControls.userData.isResetting) {
+           orbitControls.target.lerp(originVec, 0.04);
+           camera.position.lerp(defaultCameraPos, 0.04);
+
+           if (orbitControls.target.distanceTo(originVec) < 1.0) {
+              orbitControls.userData.isResetting = false;
+           }
+        }
+      }
 
       // Must update controls
       orbitControls.update();
