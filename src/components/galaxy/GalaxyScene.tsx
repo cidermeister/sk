@@ -32,6 +32,14 @@ function CameraController({ targetPosition }: { targetPosition: [number, number,
       // @ts-ignore - OrbitControls is attached to controls
       const orbitControls = controls as any;
 
+      // Safe guard object properties to prevent crashes on initial render
+      if (typeof orbitControls.userData !== "object" || orbitControls.userData === null) {
+        orbitControls.userData = {
+          isResetting: false,
+          lastTargetPosition: false
+        };
+      }
+
       if (targetPosition) {
         const targetVec = new THREE.Vector3(...targetPosition);
 
