@@ -17,13 +17,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Handle old stale cookies from previous deployments
     let resolvedUserId = session.user.id;
-    if (resolvedUserId === "auto-login-user-id") {
-      const devUser = await prisma.user.findUnique({ where: { email: "dev@example.com" } });
-      if (devUser) {
-        resolvedUserId = devUser.id;
-      }
+
+    // Explicitly verify the user exists in the database to prevent P2003 Foreign Key Constraint violations
+    let dbUser = await prisma.user.findUnique({ where: { id: resolvedUserId } });
+
+    // If they don't exist (e.g. stale cookie, db reset, or old auto-login string), try to recover using Dev User
+    if (!dbUser) {
+      dbUser = await prisma.user.upsert({
+        where: { email: "dev@example.com" },
+        update: {},
+        create: {
+          email: "dev@example.com",
+          name: "Dev User",
+        },
+      });
+      resolvedUserId = dbUser.id;
     }
 
     const tribute = await prisma.tribute.create({
