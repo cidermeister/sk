@@ -60,7 +60,7 @@ export function GalaxyScene({ tributes, onStarClick, targetPosition }: GalaxySce
   }, [tributes]);
 
   return (
-    <div className="w-full h-[calc(100vh-4rem)] absolute top-16 left-0 -z-10">
+    <div className="w-full h-[calc(100vh-4rem)] absolute top-0 left-0 -z-10">
       <Canvas camera={{ position: [0, 50, 100], fov: 60 }}>
         <color attach="background" args={["#050510"]} />
         <ambientLight intensity={5} />
@@ -85,7 +85,8 @@ export function GalaxyScene({ tributes, onStarClick, targetPosition }: GalaxySce
         </group>
 
         <CameraController targetPosition={targetPosition} />
-        <OrbitControls makeDefault enablePan={true} enableZoom={true} enableRotate={true} autoRotate={!targetPosition} autoRotateSpeed={0.15} maxDistance={250} minDistance={10} />
+        {/* @ts-ignore - listenToKeyEvents needs to be attached to window */}
+        <OrbitControls listenToKeyEvents={typeof window !== "undefined" ? window : undefined} makeDefault enablePan={true} enableZoom={true} enableRotate={true} autoRotate={!targetPosition} autoRotateSpeed={0.15} maxDistance={250} minDistance={10} />
       </Canvas>
     </div>
   );
